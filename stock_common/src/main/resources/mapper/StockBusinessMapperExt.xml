@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itheima.stock.mapper.StockBusinessMapperExt">
+
+    <resultMap id="BaseResultMap" type="com.itheima.stock.pojo.entity.StockBusiness">
+            <id property="stockCode" column="stock_code" jdbcType="CHAR"/>
+            <result property="stockName" column="stock_name" jdbcType="VARCHAR"/>
+            <result property="blockLabel" column="block_label" jdbcType="VARCHAR"/>
+            <result property="blockName" column="block_name" jdbcType="VARCHAR"/>
+            <result property="business" column="business" jdbcType="VARCHAR"/>
+            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        stock_code,stock_name,block_label,
+        block_name,business,update_time
+    </sql>
+
+    <select id="selectByPrimaryKey" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from stock_business
+        where  stock_code = #{secCode,jdbcType=CHAR}
+    </select>
+
+    <select id="getAll" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from stock_business
+    </select>
+    <select id="getAllStockCodes" resultType="string">
+        select
+            stock_code
+        from stock_business
+    </select>
+
+    <select id="searchStockLike" resultType="java.util.Map">
+        SELECT
+            sb.stock_code AS code,
+            sb.stock_name AS name
+        FROM
+            stock_business AS sb
+        WHERE
+            sb.stock_code LIKE CONCAT('%',#{codeStr},'%')
+    </select>
+
+    <delete id="deleteByPrimaryKey">
+        delete from stock_business
+        where  stock_code = #{secCode,jdbcType=CHAR}
+    </delete>
+    <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.itheima.stock.pojo.entity.StockBusiness" useGeneratedKeys="true">
+        insert into stock_business
+        ( stock_code,stock_name,block_label
+        ,block_name,business,update_time
+        )
+        values (#{stockCode,jdbcType=CHAR},#{stockName,jdbcType=VARCHAR},#{blockLabel,jdbcType=VARCHAR}
+        ,#{blockName,jdbcType=VARCHAR},#{business,jdbcType=VARCHAR},#{updateTime,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.itheima.stock.pojo.entity.StockBusiness" useGeneratedKeys="true">
+        insert into stock_business
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+                <if test="stockCode != null">stockCode,</if>
+                <if test="stockName != null">stockName,</if>
+                <if test="blockLabel != null">block_label,</if>
+                <if test="blockName != null">blockName,</if>
+                <if test="business != null">business,</if>
+                <if test="updateTime != null">updateTime,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+                <if test="stockCode != null">stock_code = #{stockCode,jdbcType=CHAR},</if>
+                <if test="stockName != null">stock_name = #{stockName,jdbcType=VARCHAR},</if>
+                <if test="blockLabel != null">block_label = #{blockLabel,jdbcType=VARCHAR},</if>
+                <if test="blockName != null">block_name = #{blockName,jdbcType=VARCHAR},</if>
+                <if test="business != null">business = #{business,jdbcType=VARCHAR},</if>
+                <if test="updateTime != null">update_time = #{updateTime,jdbcType=TIMESTAMP},</if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="com.itheima.stock.pojo.entity.StockBusiness">
+        update stock_business
+        <set>
+                <if test="stockName != null">
+                    stock_name = #{stockName,jdbcType=VARCHAR},
+                </if>
+                <if test="blockLabel != null">
+                    block_label = #{blockLabel,jdbcType=VARCHAR},
+                </if>
+                <if test="sectorName != null">
+                    block_name = #{blockName,jdbcType=VARCHAR},
+                </if>
+                <if test="business != null">
+                    business = #{business,jdbcType=VARCHAR},
+                </if>
+                <if test="updateTime != null">
+                    update_time = #{updateTime,jdbcType=TIMESTAMP},
+                </if>
+        </set>
+        where   stock_code = #{stockCode,jdbcType=CHAR}
+    </update>
+    <update id="updateByPrimaryKey" parameterType="com.itheima.stock.pojo.entity.StockBusiness">
+        update stock_business
+        set
+            stock_name =  #{stockName,jdbcType=VARCHAR},
+            block_label =  #{blockLabel,jdbcType=VARCHAR},
+            block_name =  #{blockName,jdbcType=VARCHAR},
+            business =  #{business,jdbcType=VARCHAR},
+            update_time =  #{updateTime,jdbcType=TIMESTAMP}
+        where   stock_code = #{stockCode,jdbcType=CHAR}
+    </update>
+
+    <select id="getInfoByCode" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM
+        stock_business as sb
+        WHERE
+        sb.stock_code = #{code}
+    </select>
+</mapper>

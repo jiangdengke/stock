@@ -1,0 +1,426 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itheima.stock.mapper.StockRtInfoMapperExt">
+
+    <resultMap id="BaseResultMap" type="com.itheima.stock.pojo.entity.StockRtInfo">
+            <id property="id" column="id" jdbcType="VARCHAR"/>
+            <result property="stockCode" column="stock_code" jdbcType="CHAR"/>
+            <result property="curTime" column="cur_time" jdbcType="TIMESTAMP"/>
+            <result property="stockName" column="stock_name" jdbcType="VARCHAR"/>
+            <result property="openPrice" column="open_price" jdbcType="DECIMAL"/>
+            <result property="preClosePrice" column="pre_close_price" jdbcType="DECIMAL"/>
+            <result property="curPrice" column="cur_price" jdbcType="DECIMAL"/>
+            <result property="maxPrice" column="max_price" jdbcType="DECIMAL"/>
+            <result property="minPrice" column="min_price" jdbcType="DECIMAL"/>
+            <result property="tradeAmount" column="trade_amount" jdbcType="DECIMAL"/>
+            <result property="tradeVolume" column="trade_volume" jdbcType="BIGINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,stock_code,cur_time,
+        stock_name,open_price,pre_close_price,
+        cur_price,max_price,min_price,
+        trade_amount,trade_volume
+    </sql>
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from stock_rt_info
+        where  id = #{id,jdbcType=VARCHAR}
+    </select>
+    <select id="getStockIncreaseLimit" resultType="com.itheima.stock.pojo.domain.StockUpdownDomain">
+        SELECT
+            sri.stock_code AS code,
+            sri.stock_name AS name,
+            sri.trade_amount AS tradeAmt,
+            sri.pre_close_price AS preClosePrice,
+            (sri.max_price-sri.min_price)/sri.pre_close_price AS amplitude,
+            sri.trade_volume AS tradeVol,
+            sri.cur_price-sri.pre_close_price AS increase,
+            (sri.cur_price-sri.pre_close_price)/sri.pre_close_price AS upDown,
+            sri.cur_price AS tradePrice,
+            sri.cur_time AS curDate
+        FROM
+            stock_rt_info AS sri
+        WHERE
+            sri.cur_time = #{timePoint}
+        ORDER BY
+            upDown DESC
+            LIMIT #{limitNum}
+    </select>
+    <select id="getUpdwonCount" resultType="map">
+        SELECT
+        DATE_FORMAT(tmp.curTime,'%Y%m%d%H%i')  AS time,
+        COUNT(*) AS count
+        FROM (SELECT
+        (sri.cur_price-sri.pre_close_price)/sri.pre_close_price AS upDown,
+        sri.cur_time AS curTime
+        FROM
+        stock_rt_info AS sri
+        WHERE
+        sri.cur_time BETWEEN #{startTime} and #{endTime}
+        HAVING 	upDown
+        <if test="flag==1">
+            >=0.1
+        </if>
+        <if test="flag==0">
+            &lt;=-0.1
+        </if>
+        ) AS tmp
+        GROUP BY time
+    </select>
+    <select id="getAllStockUpDownByTime" resultType="com.itheima.stock.pojo.domain.StockUpdownDomain">
+        SELECT
+            sri.stock_code AS code,
+            sri.stock_name AS name,
+            sri.trade_amount AS tradeAmt,
+            sri.pre_close_price AS preClosePrice,
+            (sri.max_price-sri.min_price)/sri.pre_close_price AS amplitude,
+            sri.trade_volume AS tradeVol,
+            sri.cur_price-sri.pre_close_price AS increase,
+            (sri.cur_price-sri.pre_close_price)/sri.pre_close_price AS upDown,
+            sri.cur_price AS tradePrice,
+            sri.cur_time AS curDate
+        FROM
+            stock_rt_info AS sri
+        WHERE
+            sri.cur_time = #{timePoint}
+        ORDER BY
+            upDown DESC
+    </select>
+    <select id="getStockUpDownSectionByTime" resultType="map">
+     <![CDATA[
+        SELECT
+            tmp1.title,
+            count(*) AS count
+        FROM
+        (SELECT
+        CASE
+            WHEN tmp.rate > 0.07 THEN  '>7%'
+            WHEN tmp.rate > 0.05 AND tmp.rate <= 0.07 THEN '5~7%'
+            WHEN tmp.rate > 0.03 AND tmp.rate <= 0.05 THEN '3~5%'
+            WHEN tmp.rate > 0 AND tmp.rate <= 0.03 THEN '0~3%'
+            WHEN tmp.rate > -0.03 AND tmp.rate <= 0 THEN '-3~0%'
+            WHEN tmp.rate > -0.05 AND tmp.rate <= -0.03 THEN '-5~-3%'
+            WHEN tmp.rate > -0.07 AND tmp.rate <= -0.05 THEN '-7~-5%'
+            ELSE '<-7%'
+            END 'title'
+        FROM
+            (SELECT
+                (sri.cur_price-sri.pre_close_price)/sri.pre_close_price AS rate
+            FROM
+                stock_rt_info AS sri
+            WHERE sri.cur_time = #{timePoint}) AS tmp)
+        AS tmp1
+        GROUP BY tmp1.title
+        ]]>
+    </select>
+    <!--    <select id="getStockUpDownSectionByTime" resultType="map">-->
+<!--        SELECT-->
+<!--            tmp1.title,-->
+<!--            count(*) AS count-->
+<!--        FROM-->
+<!--        (SELECT-->
+<!--        CASE-->
+<!--            WHEN tmp.rate > 0.07 THEN  '>7%'-->
+<!--            WHEN tmp.rate > 0.05 AND tmp.rate &lt;= 0.07 THEN '5~7%'-->
+<!--            WHEN tmp.rate > 0.03 AND tmp.rate &lt;= 0.05 THEN '3~5%'-->
+<!--            WHEN tmp.rate > 0 AND tmp.rate &lt;= 0.03 THEN '0~3%'-->
+<!--            WHEN tmp.rate > -0.03 AND tmp.rate &lt;= 0 THEN '-3~0%'-->
+<!--            WHEN tmp.rate > -0.05 AND tmp.rate &lt;= -0.03 THEN '-5~-3%'-->
+<!--            WHEN tmp.rate > -0.07 AND tmp.rate &lt;= -0.05 THEN '-7~-5%'-->
+<!--            ELSE '&lt;-7%'-->
+<!--            END 'title'-->
+<!--        FROM-->
+<!--            (SELECT-->
+<!--                (sri.cur_price-sri.pre_close_price)/sri.pre_close_price AS rate-->
+<!--            FROM-->
+<!--                stock_rt_info AS sri-->
+<!--            WHERE sri.cur_time = #{timePoint}) AS tmp)-->
+<!--        AS tmp1-->
+<!--        GROUP BY tmp1.title-->
+<!--    </select>-->
+    <select id="getStockSecondInfoByCodeAndTime" resultType="com.itheima.stock.pojo.domain.Stock4MinuteDomain">
+        SELECT
+            sri.cur_time AS date,
+            sri.trade_amount as tradeAmt,
+            sri.stock_code as code,
+            sri.min_price lowPrice,
+            sri.pre_close_price as preClosePrice,
+            sri.stock_name as name,
+            sri.max_price as highPrice,
+            sri.open_price as openPrice,
+            sri.trade_volume as tradeVol,
+            sri.cur_price as tradePrice
+        FROM
+            stock_rt_info AS sri
+        WHERE
+            sri.stock_code = #{stockCode}
+          AND sri.cur_time BETWEEN #{startTime}
+          AND #{endTime}
+        ORDER BY
+	        sri.cur_time ASC;
+    </select>
+    <select id="getStockEvyDayInfoByCodeAndTime" resultType="com.itheima.stock.pojo.domain.Stock4EvrDayDomain">
+        SELECT
+            sri2.cur_time AS date,
+            sri2.stock_code AS code,
+            sri2.max_price AS highPrice,
+            sri2.min_price AS lowPrice,
+            sri2.stock_name AS name,
+            sri2.open_price AS openPrice,
+            sri2.pre_close_price AS preClosePrice,
+            sri2.trade_volume AS tradeVol,
+            sri2.trade_amount AS tradeAmt,
+            sri2.cur_price AS closePrice
+        FROM
+            stock_rt_info AS sri2
+        WHERE
+            sri2.stock_code = #{stockCode}
+          AND sri2.cur_time IN (
+            SELECT
+            MAX( sri.cur_time ) AS date
+            FROM
+            stock_rt_info AS sri
+            WHERE
+            sri.stock_code = #{stockCode}
+          AND sri.cur_time BETWEEN #{startTime}
+          and #{endTime}
+            GROUP BY
+            DATE_FORMAT( sri.cur_time, '%Y%m%d' ))
+        ORDER BY date ASC
+    </select>
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+        delete from stock_rt_info
+        where  id = #{id,jdbcType=VARCHAR}
+    </delete>
+    <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.itheima.stock.pojo.entity.StockRtInfo" useGeneratedKeys="true">
+        insert into stock_rt_info
+        ( id,stock_code,cur_time
+        ,stock_name,open_price,pre_close_price
+        ,cur_price,max_price,min_price
+        ,trade_amount,trade_volume)
+        values (#{id,jdbcType=VARCHAR},#{stockCode,jdbcType=CHAR},#{curTime,jdbcType=TIMESTAMP}
+        ,#{stockName,jdbcType=VARCHAR},#{openPrice,jdbcType=DECIMAL},#{preClosePrice,jdbcType=DECIMAL}
+        ,#{curPrice,jdbcType=DECIMAL},#{maxPrice,jdbcType=DECIMAL},#{minPrice,jdbcType=DECIMAL}
+        ,#{tradeAmount,jdbcType=DECIMAL},#{tradeVolume,jdbcType=BIGINT})
+    </insert>
+
+    <insert id="insertBatch">
+        insert into stock_rt_info
+        ( id,stock_code,cur_time
+        ,stock_name,open_price,pre_close_price
+        ,cur_price,max_price,min_price
+        ,trade_amount,trade_volume)
+        values
+         <foreach collection="infos" item="info" separator=",">
+             (#{info.id,jdbcType=VARCHAR},#{info.stockCode,jdbcType=CHAR},#{info.curTime,jdbcType=TIMESTAMP}
+             ,#{info.stockName,jdbcType=VARCHAR},#{info.openPrice,jdbcType=DECIMAL},#{info.preClosePrice,jdbcType=DECIMAL}
+             ,#{info.curPrice,jdbcType=DECIMAL},#{info.maxPrice,jdbcType=DECIMAL},#{info.minPrice,jdbcType=DECIMAL}
+             ,#{info.tradeAmount,jdbcType=DECIMAL},#{info.tradeVolume,jdbcType=BIGINT})
+         </foreach>
+    </insert>
+
+    <select id="getWeekLineData" resultType="com.itheima.stock.pojo.domain.Stock4EvrWeekDomain">
+        SELECT
+            tmp.stock_code,
+            tmp.maxPrice,
+            tmp.minPrice,
+            tmp.avgPrice,
+            s1.cur_price AS openPrice,
+            s2.cur_price AS closePrice,
+            tmp.mxTime
+        FROM
+            (
+                SELECT
+                    stock_code,
+                    MAX( cur_time ) AS mxTime,
+                    MIN( cur_time ) AS miTime,
+                    MAX( max_price ) AS maxPrice,
+                    MIN( min_price ) AS minPrice,
+                    AVG( cur_price ) AS avgPrice
+                FROM
+                    stock_rt_info
+                WHERE
+                    stock_code = #{stockCode}
+                  AND cur_time BETWEEN #{startTime} AND #{endTime}
+                GROUP BY
+                    DATE_FORMAT( cur_time, '%Y-%u' )
+            ) AS tmp
+                LEFT JOIN stock_rt_info AS s1 ON s1.stock_code = tmp.stock_code
+                AND s1.cur_time = tmp.miTime
+                LEFT JOIN stock_rt_info AS s2 ON s2.stock_code = tmp.stock_code
+                AND s2.cur_time = tmp.mxTime
+        ORDER BY
+            mxTime ASC
+    </select>
+
+    <select id="getStockInfoByCodeAndTimePoint" resultMap="BaseResultMap">
+        select <include refid="Base_Column_List"/> from  stock_rt_info as sri
+        where sri.stock_code=#{code} and sri.cur_time =#{timePoint}
+    </select>
+
+    <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.itheima.stock.pojo.entity.StockRtInfo" useGeneratedKeys="true">
+        insert into stock_rt_info
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+                <if test="id != null">id,</if>
+                <if test="stockCode != null">stockCode,</if>
+                <if test="curTime != null">curTime,</if>
+                <if test="stockName != null">stockName,</if>
+                <if test="openPrice != null">openPrice,</if>
+                <if test="preClosePrice != null">preClosePrice,</if>
+                <if test="curPrice != null">curPrice,</if>
+                <if test="maxPrice != null">maxPrice,</if>
+                <if test="minPrice != null">minPrice,</if>
+                <if test="tradeAmount != null">tradeAmount,</if>
+                <if test="tradeVolume != null">tradeVolume,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+                <if test="id != null">id = #{id,jdbcType=VARCHAR},</if>
+                <if test="stockCode != null">stock_code = #{stockCode,jdbcType=CHAR},</if>
+                <if test="curTime != null">cur_time = #{curTime,jdbcType=TIMESTAMP},</if>
+                <if test="stockName != null">stock_name = #{stockName,jdbcType=VARCHAR},</if>
+                <if test="openPrice != null">open_price = #{openPrice,jdbcType=DECIMAL},</if>
+                <if test="preClosePrice != null">pre_close_price = #{preClosePrice,jdbcType=DECIMAL},</if>
+                <if test="curPrice != null">cur_price = #{curPrice,jdbcType=DECIMAL},</if>
+                <if test="maxPrice != null">max_price = #{maxPrice,jdbcType=DECIMAL},</if>
+                <if test="minPrice != null">min_price = #{minPrice,jdbcType=DECIMAL},</if>
+                <if test="tradeAmount != null">trade_amount = #{tradeAmount,jdbcType=DECIMAL},</if>
+                <if test="tradeVolume != null">trade_volume = #{tradeVolume,jdbcType=BIGINT},</if>
+        </trim>
+    </insert>
+
+    <select id="getStockInfoGt" resultType="com.itheima.stock.pojo.domain.StockShortInfoDomain">
+        SELECT
+            sri.cur_time AS date,
+            sri.cur_price AS tradePrice,
+            sri.trade_volume AS tradeVol,
+            sri.trade_amount AS tradeAmt
+        FROM
+            stock_rt_info sri
+        WHERE
+            sri.stock_code = #{stockCode}
+          AND sri.cur_time >= #{startTime}
+        ORDER BY date DESC
+    </select>
+
+    <!--务必根据时间点进行排序，且排序规则为升序排序-->
+    <select id="getHalfWeekLineData" resultType="com.itheima.stock.pojo.domain.Stock4EvrWeekDomain">
+        SELECT
+            stock_code AS stockCode,
+            MAX( cur_time ) AS mxTime,
+            MIN( cur_time ) AS miTime,
+            MAX( cur_price ) AS maxPrice,
+            MIN( cur_price ) AS minPrice,
+            AVG( cur_price ) AS avgPrice
+        FROM
+            stock_rt_info
+        WHERE
+            stock_code = #{stockCode}
+          AND cur_time BETWEEN #{startTime} AND #{endTime}
+        GROUP BY
+            DATE_FORMAT( cur_time, '%Y-%u')
+        ORDER BY
+            mxTime ASC
+    </select>
+
+    <select id="getStockInfoByCodeAndTimes" resultType="java.math.BigDecimal">
+        SELECT
+            sri.cur_price
+        FROM stock_rt_info AS sri
+        WHERE sri.stock_code=#{stockCode} AND sri.cur_time in
+        <foreach collection="times" item="timePoint" separator="," open="(" close=")">
+            #{timePoint}
+        </foreach>
+        ORDER BY
+        sri.cur_time ASC
+    </select>
+    <select id="getMaxTimeByTimeRange" resultType="java.util.Date">
+        SELECT
+            MAX( sri.cur_time ) AS date
+        FROM
+            stock_rt_info AS sri
+        WHERE
+            sri.stock_code = #{code}
+          AND sri.cur_time BETWEEN #{start}
+          and #{end}
+        GROUP BY
+            DATE_FORMAT( sri.cur_time, '%Y%m%d' )
+    </select>
+    <select id="getDLineInfo" resultType="com.itheima.stock.pojo.domain.Stock4EvrDayDomain">
+        SELECT
+            sri2.cur_time AS date,
+            sri2.stock_code AS code,
+            sri2.max_price AS highPrice,
+            sri2.min_price AS lowPrice,
+            sri2.stock_name AS name,
+            sri2.open_price AS openPrice,
+            sri2.pre_close_price AS preClosePrice,
+            sri2.trade_volume AS tradeVol,
+            sri2.trade_amount AS tradeAmt,
+            sri2.cur_price AS closePrice
+        FROM
+            stock_rt_info AS sri2
+        WHERE
+            sri2.stock_code = #{code}
+          AND sri2.cur_time IN
+        <foreach collection="times" item="time" separator="," open="(" close=")">
+            #{time}
+        </foreach>
+    </select>
+
+    <update id="updateByPrimaryKeySelective" parameterType="com.itheima.stock.pojo.entity.StockRtInfo">
+        update stock_rt_info
+        <set>
+                <if test="stockCode != null">
+                    stock_code = #{stockCode,jdbcType=CHAR},
+                </if>
+                <if test="curTime != null">
+                    cur_time = #{curTime,jdbcType=TIMESTAMP},
+                </if>
+                <if test="stockName != null">
+                    stock_name = #{stockName,jdbcType=VARCHAR},
+                </if>
+                <if test="openPrice != null">
+                    open_price = #{openPrice,jdbcType=DECIMAL},
+                </if>
+                <if test="preClosePrice != null">
+                    pre_close_price = #{preClosePrice,jdbcType=DECIMAL},
+                </if>
+                <if test="curPrice != null">
+                    cur_price = #{curPrice,jdbcType=DECIMAL},
+                </if>
+                <if test="maxPrice != null">
+                    max_price = #{maxPrice,jdbcType=DECIMAL},
+                </if>
+                <if test="minPrice != null">
+                    min_price = #{minPrice,jdbcType=DECIMAL},
+                </if>
+                <if test="tradeAmount != null">
+                    trade_amount = #{tradeAmount,jdbcType=DECIMAL},
+                </if>
+                <if test="tradeVolume != null">
+                    trade_volume = #{tradeVolume,jdbcType=BIGINT},
+                </if>
+        </set>
+        where   id = #{id,jdbcType=VARCHAR}
+    </update>
+    <update id="updateByPrimaryKey" parameterType="com.itheima.stock.pojo.entity.StockRtInfo">
+        update stock_rt_info
+        set
+            stock_code =  #{stockCode,jdbcType=CHAR},
+            cur_time =  #{curTime,jdbcType=TIMESTAMP},
+            stock_name =  #{stockName,jdbcType=VARCHAR},
+            open_price =  #{openPrice,jdbcType=DECIMAL},
+            pre_close_price =  #{preClosePrice,jdbcType=DECIMAL},
+            cur_price =  #{curPrice,jdbcType=DECIMAL},
+            max_price =  #{maxPrice,jdbcType=DECIMAL},
+            min_price =  #{minPrice,jdbcType=DECIMAL},
+            trade_amount =  #{tradeAmount,jdbcType=DECIMAL},
+            trade_volume =  #{tradeVolume,jdbcType=BIGINT}
+        where   id = #{id,jdbcType=VARCHAR}
+    </update>
+</mapper>

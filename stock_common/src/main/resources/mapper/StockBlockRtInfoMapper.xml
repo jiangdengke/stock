@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itheima.stock.mapper.StockBlockRtInfoMapper">
+
+    <resultMap id="BaseResultMap" type="com.itheima.stock.pojo.entity.StockBlockRtInfo">
+            <id property="id" column="id" jdbcType="VARCHAR"/>
+            <result property="label" column="label" jdbcType="VARCHAR"/>
+            <result property="blockName" column="block_name" jdbcType="VARCHAR"/>
+            <result property="companyNum" column="company_num" jdbcType="INTEGER"/>
+            <result property="avgPrice" column="avg_price" jdbcType="DECIMAL"/>
+            <result property="updownRate" column="updown_rate" jdbcType="DECIMAL"/>
+            <result property="tradeAmount" column="trade_amount" jdbcType="BIGINT"/>
+            <result property="tradeVolume" column="trade_volume" jdbcType="DECIMAL"/>
+            <result property="curTime" column="cur_time" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,label,block_name,
+        company_num,avg_price,updown_rate,
+        trade_amount,trade_volume,cur_time
+    </sql>
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from stock_block_rt_info
+        where  id = #{id,jdbcType=VARCHAR}
+    </select>
+    <select id="getBlockInfoLimit" resultType="com.itheima.stock.pojo.domain.StockBlockDomain">
+        select
+            sbri.company_num as  companyNum,
+            sbri.trade_amount as  tradeAmt,
+            sbri.label as code,
+            sbri.avg_price as  avgPrice,
+            sbri.block_name as  name,
+            sbri.cur_time as  curDate,
+            sbri.trade_volume as tradeVol,
+            sbri.updown_rate as  updownRate
+        from   stock_block_rt_info as  sbri
+        where sbri.cur_time=#{timePoint}
+        order by tradeVol desc limit #{number}
+    </select>
+    <select id="sectorAllLimit" resultType="com.itheima.stock.pojo.domain.StockBlockDomain">
+        select
+        sbr.company_num  as companyNum,
+        sbr.trade_amount as tradeAmt,
+        sbr.label        as code,
+        sbr.avg_price    as avgPrice,
+        sbr.block_name   as name,
+        sbr.cur_time     as curDate,
+        sbr.trade_volume as tradeVol,
+        sbr.updown_rate  as updownRate
+        from stock_block_rt_info as sbr
+        where sbr.cur_time=#{timePoint}
+        order by sbr.trade_volume desc
+        limit 10
+    </select>
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+        delete from stock_block_rt_info
+        where  id = #{id,jdbcType=VARCHAR}
+    </delete>
+    <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.itheima.stock.pojo.entity.StockBlockRtInfo" useGeneratedKeys="true">
+        insert into stock_block_rt_info
+        ( id,label,block_name
+        ,company_num,avg_price,updown_rate
+        ,trade_amount,trade_volume,cur_time
+        )
+        values (#{id,jdbcType=VARCHAR},#{label,jdbcType=VARCHAR},#{blockName,jdbcType=VARCHAR}
+        ,#{companyNum,jdbcType=INTEGER},#{avgPrice,jdbcType=DECIMAL},#{updownRate,jdbcType=DECIMAL}
+        ,#{tradeAmount,jdbcType=BIGINT},#{tradeVolume,jdbcType=DECIMAL},#{curTime,jdbcType=TIMESTAMP}
+        )
+    </insert>
+    <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.itheima.stock.pojo.entity.StockBlockRtInfo" useGeneratedKeys="true">
+        insert into stock_block_rt_info
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+                <if test="id != null">id,</if>
+                <if test="label != null">label,</if>
+                <if test="blockName != null">blockName,</if>
+                <if test="companyNum != null">companyNum,</if>
+                <if test="avgPrice != null">avgPrice,</if>
+                <if test="updownRate != null">updownRate,</if>
+                <if test="tradeAmount != null">tradeAmount,</if>
+                <if test="tradeVolume != null">tradeVolume,</if>
+                <if test="curTime != null">curTime,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+                <if test="id != null">id = #{id,jdbcType=VARCHAR},</if>
+                <if test="label != null">label = #{label,jdbcType=VARCHAR},</if>
+                <if test="blockName != null">block_name = #{blockName,jdbcType=VARCHAR},</if>
+                <if test="companyNum != null">company_num = #{companyNum,jdbcType=INTEGER},</if>
+                <if test="avgPrice != null">avg_price = #{avgPrice,jdbcType=DECIMAL},</if>
+                <if test="updownRate != null">updown_rate = #{updownRate,jdbcType=DECIMAL},</if>
+                <if test="tradeAmount != null">trade_amount = #{tradeAmount,jdbcType=BIGINT},</if>
+                <if test="tradeVolume != null">trade_volume = #{tradeVolume,jdbcType=DECIMAL},</if>
+                <if test="curTime != null">cur_time = #{curTime,jdbcType=TIMESTAMP},</if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="com.itheima.stock.pojo.entity.StockBlockRtInfo">
+        update stock_block_rt_info
+        <set>
+                <if test="label != null">
+                    label = #{label,jdbcType=VARCHAR},
+                </if>
+                <if test="blockName != null">
+                    block_name = #{blockName,jdbcType=VARCHAR},
+                </if>
+                <if test="companyNum != null">
+                    company_num = #{companyNum,jdbcType=INTEGER},
+                </if>
+                <if test="avgPrice != null">
+                    avg_price = #{avgPrice,jdbcType=DECIMAL},
+                </if>
+                <if test="updownRate != null">
+                    updown_rate = #{updownRate,jdbcType=DECIMAL},
+                </if>
+                <if test="tradeAmount != null">
+                    trade_amount = #{tradeAmount,jdbcType=BIGINT},
+                </if>
+                <if test="tradeVolume != null">
+                    trade_volume = #{tradeVolume,jdbcType=DECIMAL},
+                </if>
+                <if test="curTime != null">
+                    cur_time = #{curTime,jdbcType=TIMESTAMP},
+                </if>
+        </set>
+        where   id = #{id,jdbcType=VARCHAR}
+    </update>
+    <insert id="insertBatch">
+        insert into stock_block_rt_info
+        ( id,label,block_name
+        ,company_num,avg_price,updown_rate
+        ,trade_amount,trade_volume,cur_time
+        )
+        values
+        <foreach collection="infos" item="info" separator=",">
+            (#{info.id,jdbcType=BIGINT},#{info.label,jdbcType=VARCHAR},#{info.blockName,jdbcType=VARCHAR}
+            ,#{info.companyNum,jdbcType=INTEGER},#{info.avgPrice,jdbcType=DECIMAL},#{info.updownRate,jdbcType=DECIMAL}
+            ,#{info.tradeAmount,jdbcType=BIGINT},#{info.tradeVolume,jdbcType=DECIMAL},#{info.curTime,jdbcType=TIMESTAMP}
+            )
+        </foreach>
+    </insert>
+    <update id="updateByPrimaryKey" parameterType="com.itheima.stock.pojo.entity.StockBlockRtInfo">
+        update stock_block_rt_info
+        set
+            label =  #{label,jdbcType=VARCHAR},
+            block_name =  #{blockName,jdbcType=VARCHAR},
+            company_num =  #{companyNum,jdbcType=INTEGER},
+            avg_price =  #{avgPrice,jdbcType=DECIMAL},
+            updown_rate =  #{updownRate,jdbcType=DECIMAL},
+            trade_amount =  #{tradeAmount,jdbcType=BIGINT},
+            trade_volume =  #{tradeVolume,jdbcType=DECIMAL},
+            cur_time =  #{curTime,jdbcType=TIMESTAMP}
+        where   id = #{id,jdbcType=VARCHAR}
+    </update>
+</mapper>

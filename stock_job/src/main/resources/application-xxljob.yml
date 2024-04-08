@@ -1,0 +1,16 @@
+xxl:
+    job:
+        accessToken: ''
+        admin:
+            addresses: http://118.89.81.24:8093/xxl-job-admin # 任务调度中心部署根地址
+        executor:
+            address: ''
+            appname: stock-job
+            ip: ''
+            logpath: logs # 日志在当前项目工程下
+            logretentiondays: 30
+            port: 9999 #心跳端口，如果和项目启动端口重合，端口压力大，因此另开一个端口
+                        # 程序运行时，调度中心会从这个端口检查心跳
+                        #同时也是执行器端口，调度中心会通过这个端口控制定时任务的执行
+logging:
+    config: classpath:logback.xml
